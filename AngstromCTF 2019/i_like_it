@@ -1,0 +1,22 @@
+Cardi B okrrrrrrr!!!
+
+If you reversed in radare2 (or ida etc)
+
+You see the control flow follows as such:
+
+First you input:
+
+okrrrrrrr
+
+Next you input two numbers that are separated by a space which:
+
+--> Add together to make 0x88 (136)
+--> Multiply together to make 0xec7 (3783)
+
+Using a simple prime factorisation website we figure out the prime factors are:
+
+3 x 13 x 97
+
+So the two numbers are 39 & 97 
+
+Flag: actf{okrrrrrrr_39_97}

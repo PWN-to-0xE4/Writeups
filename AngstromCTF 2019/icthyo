@@ -1,0 +1,96 @@
+Steganography LSB tool:
+
+My notes while reversing:
+
+read_file:
+
+obj.rows -> malloc address
+         -> pointer of 2048bytes -> 2048 rows?
+
+sym.imp.png_get_rowbytes -> returns 0x300 or 768
+768 / 3 = 256 -> each pixel has 3bytes allocated to it (rgb)
+
+shl rdx, 3
+puts counter into multiples of 8
+
+2048 is the malloc size of obj.rows
+meaning that there are 2048/8=256 official rows
+
+encode:
+
+for (int y=0; y <= 255; ++y){
+        for (int x=0; x <= 255; ++x){
+
+                int r = red_pixel_part^rand(0,1);
+                int g = green_pixel_part^rand(0,1);
+                int b = blue_pixel_part^rand(0,1)
+
+                pixel[y][x] = pixel(r,g,b); // updates pixel with new value
+
+        }
+
+        for (int i=0; i <= 7; ++i){
+                // goes up every 32 pixels in a row - 2**5 = 32 
+                // sets blue value of pixels to each bit in the row to corresponding ascii bit
+                // i.e for 1011 0011
+
+                //1st char would be 1, second would be 0 etc
+                // obviously it encodes the input first with blue = input ^ (red^green&1)
+
+                // fills pixels in reverse order so do [::-1] per row after you has :D
+
+                slr = i << 5;
+                pixel = row[slr];
+
+                int input = (input[y] >> i) & 1;
+
+                if (! pixel.blue == 0){
+                        //make it 0
+                        pixel.blue &= 1;
+                }
+
+                int output = (input ^ ((pixel.red ^ pixel.green)&1)) | pixel.blue // the blue will be 0 so the or doesn't make a difference
+
+                pixel.blue = output; // Each blue part of pixel holds the encoded message
+
+        }
+
+}
+
+
+
+Solution
+
+from PIL import Image
+import numpy as np
+
+pixels = np.asarray(Image.open("out.png"))
+
+string = []
+
+for row in pixels:
+        character = []
+        for i in range(8):
+                slr = i << 5 // i * 32
+                p = row[slr]
+                red   = p[0]
+                green = p[1]
+                blue  = p[2]
+
+                red_green_xor = (red ^ green) & 1
+                result        = (blue ^ red_green_xor) & 1
+
+                character.append(result)
+
+
+        character = character[::-1]
+        string.append( '0b'+''.join( map(str, character) ) )
+
+print ''.join(map(lambda x: chr(int(x, 2)), string))
+
+Flag: actf{lurking_in_the_depths_of_random_bits}
+
+
+b64 of out.png (quite long): 
+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
+

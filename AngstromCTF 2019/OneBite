@@ -1,0 +1,31 @@
+strings ./one_bite
+
+You get:
+
+Give me a flag to eat:
+]_HZGUcHTURWcUQc[SUR[cHSc^YcOU_WA   <---- flag encoded
+Yum, that was a tasty flag.
+That didn't taste so good :(
+
+If you look at disassembly, it xor's each character with 0x3c
+
+
+0x004006f0      8b45b4         mov eax, dword [local_4ch]
+|       :   0x004006f3      4898           cdqe
+|       :   0x004006f5      0fb64405c0     movzx eax, byte [local_40h + rax]
+|       :   0x004006fa      83f03c         xor eax, 0x3c    <--------------------------------------
+|       :   0x004006fd      89c2           mov edx, eax
+|       :   0x004006ff      8b45b4         mov eax, dword [local_4ch]
+|       :   0x00400702      4898           cdqe
+|       :   0x00400704      885405c0       mov byte [rbp + rax - 0x40], dl
+|       :   0x00400708      8345b401       add dword [local_4ch], 1
+
+
+Solution:
+
+
+string = bytearray(list(']_HZGUcHTURWcUQc[SUR[cHSc^YcOU_WA'))
+
+print ''.join(map(lambda x: chr(x^0x3c), string))
+
+flag: actf{i_think_im_going_to_be_sick}

