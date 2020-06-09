@@ -1,0 +1,207 @@
+import socket
+from datetime import datetime
+IP = '88.198.219.20'
+PORT = 14992
+#88.198.219.20:60010
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.connect((IP, PORT))
+s.setblocking(0)
+
+def egcd(a, b):
+    if a == 0:
+        return (b, 0, 1)
+    else:
+        g, y, x = egcd(b % a, a)
+        return (g, x - (b // a) * y, y)
+
+def inverse_mod(a, m):
+    g, x, y = egcd(a, m)
+    if g != 1:
+        raise Exception('modular inverse does not exist')
+    else:
+        return x % m
+
+def find_d(phi,e):
+    return inverse_mod(e, phi)
+
+def solve_rsa(ct,d,n):
+    return pow(ct,d,n)
+
+def encrypt_rsa(pt,e,n):
+    return pow(pt,e,n)
+
+buffer = b''
+
+E = -1
+P = -1
+Q = -1
+CT = -1
+PT = -1
+PHI = -1
+D = -1
+N = -1
+
+worst = 0
+
+def salph(s):
+    return "".join([c for c in str(s) if c in "0123456789"])
+
+while True:
+    # Read until a prompt or line break
+
+    try:
+        chunk = s.recv(4096)
+        buffer += chunk
+        if chunk.decode() != "":
+            print(chunk.decode())
+    except KeyboardInterrupt:
+        input()
+    except:
+        pass
+
+    if b'\n' not in buffer and not buffer.endswith(b': '):
+        continue
+
+    # Grab the oldest line
+    buffer = buffer.split(b'\n', 1)
+    if len(buffer) == 1:
+        line, buffer = buffer[0], b''
+    else:
+        line, buffer = buffer
+
+    # Llines start with [<code>]
+    if line[:1] != b'[':
+        continue
+
+    # Use slicing not indexing because indexing bytes returns ints
+    mode = line[1:2]
+    if mode == b'*':
+        foo = 0
+    elif mode == b'c':
+        foo = 0
+    elif mode == b':':
+        if line[4:5] == b'e':
+            E = int(line[7:].decode())
+            print (E)
+        elif line[4:7] == b'phi':
+            PHI = int(line[9:].decode())
+            print (PHI)
+        elif line[4:6] == b'pt':
+            PT = int(line[8:].decode())
+            print (PT)
+        elif line[4:6] == b'ct':
+            CT = int(line[8:].decode())
+            print (CT)
+        elif line[4:5] == b'q':
+            Q = int(line[7:].decode())
+            print (Q)
+        elif line[4:5] == b'p':
+            P = int(line[7:].decode())
+            print (P)
+        elif line[4:5] == b'n':
+            N = int(line[7:].decode())
+            print (N)
+        elif line[4:5] == b'd':
+            D = int(line[7:].decode())
+            print (D)
+        
+    elif mode == b'!':
+        foo = 0
+    elif mode == b'?':
+        print ("OUT+++")
+        dt1 = datetime.now().microsecond
+        if P == -1:
+            if N != -1 and Q != -1:
+                P = N//Q
+            elif PHI != -1 and Q != -1:
+                P = (PHI//(Q-1)) + 1
+                
+        if Q == -1:
+            if N != -1 and P != -1:
+                Q = N//P
+            elif PHI != -1 and P != -1:
+                Q = (PHI//(P-1)) + 1
+        
+        if PHI == -1:
+            if P != -1 and Q != -1:
+                PHI = (P-1)*(Q-1)
+        
+        if N == -1:
+            if P != -1 and Q != -1:
+                N = P*Q
+        
+        if D == -1:
+            if E != -1 and PHI != -1:
+                D = find_d(PHI,E)
+        
+        if PT == -1:
+            if CT != -1 and D != -1 and N != -1:
+                PT = solve_rsa(CT,D,N)
+                
+        if CT == -1:
+            if PT != -1 and E != -1 and N != -1:
+                CT = encrypt_rsa(PT,E,N)
+        
+        if line[4:5] == b'e':
+            if E == -1:
+                print ("UHHHHH")
+                input()
+            print (E)
+            s.send((str(E) + '\n').encode('utf8'))
+        elif line[4:7] == b'phi':
+            if PHI == -1:
+                print ("UHHHHH")
+                input()
+            print (PHI)
+            s.send((str(PHI) + '\n').encode('utf8'))
+        elif line[4:6] == b'pt':
+            if PT == -1:
+                print ("UHHHHH")
+                input()
+            print (PT)
+            s.send((str(PT) + '\n').encode('utf8'))
+        elif line[4:6] == b'ct':
+            if CT == -1:
+                print ("UHHHHH")
+            print (CT)
+            s.send((str(CT) + '\n').encode('utf8'))
+        elif line[4:5] == b'q':
+            if Q == -1:
+                print ("UHHHHH")
+            print (Q)
+            s.send((str(Q) + '\n').encode('utf8'))
+        elif line[4:5] == b'p':
+            if P == -1:
+                print ("UHHHHH")
+                input()
+            print (P)
+            s.send((str(P) + '\n').encode('utf8'))
+        elif line[4:5] == b'n':
+            if N == -1:
+                print ("UHHHHH")
+            print (N)
+            s.send((str(N) + '\n').encode('utf8'))
+        elif line[4:5] == b'd':
+            if D == -1:
+                print ("UHHHHH")
+            print (D)
+            s.send((str( D ) + '\n').encode('utf8'))
+        print ("GOT HERE")
+        dt2 = datetime.now().microsecond
+        tm = dt2 - dt1
+        if tm > worst:
+            worst = tm
+        print ("IN: ", dt2 - dt1)
+        E = -1
+        P = -1
+        Q = -1
+        CT = -1
+        PT = -1
+        PHI = -1
+        D = -1
+        N = -1
+    else:
+        #print (line[3:])
+        #input()
+        print ("GG")
+        print ("Worst case calculation time:", worst, "microseconds")
